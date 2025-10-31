@@ -34,6 +34,18 @@ RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-${TA_LIB_VERSION}-src.
     cd .. && rm -rf ta-lib ta-lib-${TA_LIB_VERSION}-src.tar.gz
 
 # ──────────────────────────────────────────────────────────────
+# Frontend Build Stage (React + Vite)
+# ──────────────────────────────────────────────────────────────
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/web
+COPY web/package*.json ./
+RUN npm install
+
+COPY web/ ./
+RUN npm run build
+
+# ──────────────────────────────────────────────────────────────
 # Backend Build Stage (Go Application)
 # ──────────────────────────────────────────────────────────────
 FROM golang:${GO_VERSION} AS backend-builder
@@ -59,6 +71,8 @@ RUN apk update && apk add --no-cache ca-certificates tzdata
 COPY --from=ta-lib-builder /usr/local /usr/local
 WORKDIR /app
 COPY --from=backend-builder /app/nofx .
+COPY --from=backend-builder /app/config.json .
+COPY --from=frontend-builder /app/web/dist ./web/dist
 
 EXPOSE 8080
 

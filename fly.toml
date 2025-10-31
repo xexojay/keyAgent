@@ -1,0 +1,27 @@
+# Fly.io 配置文件 - NOFX AI 交易系统
+app = "keyagent"
+primary_region = "sin"  # 新加坡区域(香港已废弃)
+
+[build]
+  dockerfile = "docker/Dockerfile.backend"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false  # 不自动停止（交易系统需要持续运行）
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  size = "shared-cpu-2x"  # 2x CPU
+  memory = "2gb"          # 2GB 内存（交易系统推荐配置）
+  cpu_kind = "shared"
+  cpus = 2

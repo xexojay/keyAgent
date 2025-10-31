@@ -110,4 +110,20 @@ export const api = {
     if (!res.ok) throw new Error('获取AI学习数据失败');
     return res.json();
   },
+
+  // 添加新trader
+  async addTrader(traderConfig: any): Promise<{ success: boolean; message: string; trader_id?: string }> {
+    const res = await fetch(`${API_BASE}/traders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(traderConfig),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || '添加trader失败');
+    }
+    return res.json();
+  },
 };

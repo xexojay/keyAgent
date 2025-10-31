@@ -4,6 +4,7 @@ import { api } from './lib/api';
 import { EquityChart } from './components/EquityChart';
 import { CompetitionPage } from './components/CompetitionPage';
 import AILearning from './components/AILearning';
+import { TraderManagement } from './components/TraderManagement';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { t, type Language } from './i18n/translations';
 import type {
@@ -15,7 +16,7 @@ import type {
   TraderInfo,
 } from './types';
 
-type Page = 'competition' | 'trader';
+type Page = 'competition' | 'trader' | 'management';
 
 function App() {
   const { language, setLanguage } = useLanguage();
@@ -23,7 +24,9 @@ function App() {
   // 从URL hash读取初始页面状态（支持刷新保持页面）
   const getInitialPage = (): Page => {
     const hash = window.location.hash.slice(1); // 去掉 #
-    return hash === 'trader' || hash === 'details' ? 'trader' : 'competition';
+    if (hash === 'trader' || hash === 'details') return 'trader';
+    if (hash === 'management') return 'management';
+    return 'competition';
   };
 
   const [currentPage, setCurrentPage] = useState<Page>(getInitialPage());
@@ -36,6 +39,8 @@ function App() {
       const hash = window.location.hash.slice(1);
       if (hash === 'trader' || hash === 'details') {
         setCurrentPage('trader');
+      } else if (hash === 'management') {
+        setCurrentPage('management');
       } else if (hash === 'competition' || hash === '') {
         setCurrentPage('competition');
       }
@@ -48,7 +53,7 @@ function App() {
   // 切换页面时更新URL hash
   const navigateToPage = (page: Page) => {
     setCurrentPage(page);
-    window.location.hash = page === 'competition' ? '' : 'trader';
+    window.location.hash = page === 'competition' ? '' : page;
   };
 
   // 获取trader列表
@@ -227,6 +232,16 @@ function App() {
                 >
                   {t('details', language)}
                 </button>
+                <button
+                  onClick={() => navigateToPage('management')}
+                  className="px-2 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold transition-all"
+                  style={currentPage === 'management'
+                    ? { background: '#F0B90B', color: '#000' }
+                    : { background: 'transparent', color: '#848E9C' }
+                  }
+                >
+                  {t('management', language)}
+                </button>
               </div>
 
               {/* Trader Selector (only show on trader page) */}
@@ -272,6 +287,8 @@ function App() {
       <main className="max-w-[1920px] mx-auto px-6 py-6">
         {currentPage === 'competition' ? (
           <CompetitionPage />
+        ) : currentPage === 'management' ? (
+          <TraderManagement language={language} />
         ) : (
           <TraderDetailsPage
             selectedTrader={selectedTrader}

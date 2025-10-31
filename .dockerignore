@@ -38,7 +38,7 @@ coin_pool_cache/
 *.log
 
 # Config files (should be mounted)
-config.json
+# config.json  # 注释掉以允许 Fly.io 部署时打包配置文件
 
 # Web build artifacts (but include source for multi-stage build)
 web/node_modules/

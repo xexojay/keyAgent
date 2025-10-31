@@ -1,10 +1,13 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"nofx/config"
 	"nofx/manager"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -68,6 +71,9 @@ func (s *Server) setupRoutes() {
 		// Trader列表
 		api.GET("/traders", s.handleTraderList)
 
+		// 添加新trader
+		api.POST("/traders", s.handleAddTrader)
+
 		// 指定trader的数据（使用query参数 ?trader_id=xxx）
 		api.GET("/status", s.handleStatus)
 		api.GET("/account", s.handleAccount)
@@ -78,6 +84,15 @@ func (s *Server) setupRoutes() {
 		api.GET("/equity-history", s.handleEquityHistory)
 		api.GET("/performance", s.handlePerformance)
 	}
+
+	// 提供前端静态文件服务
+	s.router.Static("/assets", "./web/dist/assets")
+	s.router.StaticFile("/favicon.ico", "./web/dist/favicon.ico")
+
+	// SPA路由回退 - 所有未匹配的路由返回 index.html
+	s.router.NoRoute(func(c *gin.Context) {
+		c.File("./web/dist/index.html")
+	})
 }
 
 // handleHealth 健康检查
@@ -399,6 +414,77 @@ func (s *Server) handlePerformance(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, performance)
+}
+
+// handleAddTrader 添加新trader
+func (s *Server) handleAddTrader(c *gin.Context) {
+	var req config.TraderConfig
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("请求参数错误: %v", err),
+		})
+		return
+	}
+
+	// 读取当前配置文件
+	cfg, err := config.LoadConfig("config.json")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("读取配置文件失败: %v", err),
+		})
+		return
+	}
+
+	// 验证ID唯一性
+	for _, trader := range cfg.Traders {
+		if trader.ID == req.ID {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": fmt.Sprintf("Trader ID '%s' 已存在", req.ID),
+			})
+			return
+		}
+	}
+
+	// 追加新trader到配置
+	cfg.Traders = append(cfg.Traders, req)
+
+	// 验证完整配置
+	if err := cfg.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("配置验证失败: %v", err),
+		})
+		return
+	}
+
+	// 写回配置文件
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("序列化配置失败: %v", err),
+		})
+		return
+	}
+
+	if err := os.WriteFile("config.json", data, 0644); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("写入配置文件失败: %v", err),
+		})
+		return
+	}
+
+	log.Printf("✓ 新trader '%s' 已添加到配置文件", req.Name)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": fmt.Sprintf("Trader '%s' 添加成功！请重新部署服务以使新配置生效。", req.Name),
+		"trader_id": req.ID,
+	})
 }
 
 // Start 启动服务器
