@@ -63,6 +63,9 @@ type AutoTraderConfig struct {
 	MaxDailyLoss    float64       // 最大日亏损百分比（提示）
 	MaxDrawdown     float64       // 最大回撤百分比（提示）
 	StopTradingTime time.Duration // 触发风控后暂停时长
+
+	// 自定义系统提示词
+	SystemPrompt string // 自定义系统提示词（可选，为空则使用默认）
 }
 
 // AutoTrader 自动交易器
@@ -521,11 +524,12 @@ func (at *AutoTrader) buildTradingContext() (*decision.Context, error) {
 
 	// 6. 构建上下文
 	ctx := &decision.Context{
-		CurrentTime:     time.Now().Format("2006-01-02 15:04:05"),
-		RuntimeMinutes:  int(time.Since(at.startTime).Minutes()),
-		CallCount:       at.callCount,
-		BTCETHLeverage:  at.config.BTCETHLeverage,  // 使用配置的杠杆倍数
-		AltcoinLeverage: at.config.AltcoinLeverage, // 使用配置的杠杆倍数
+		CurrentTime:        time.Now().Format("2006-01-02 15:04:05"),
+		RuntimeMinutes:     int(time.Since(at.startTime).Minutes()),
+		CallCount:          at.callCount,
+		BTCETHLeverage:     at.config.BTCETHLeverage,  // 使用配置的杠杆倍数
+		AltcoinLeverage:    at.config.AltcoinLeverage, // 使用配置的杠杆倍数
+		CustomSystemPrompt: at.config.SystemPrompt,    // 自定义系统提示词
 		Account: decision.AccountInfo{
 			TotalEquity:      totalEquity,
 			AvailableBalance: availableBalance,

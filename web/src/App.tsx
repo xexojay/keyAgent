@@ -16,7 +16,7 @@ import type {
   TraderInfo,
 } from './types';
 
-type Page = 'competition' | 'trader' | 'management';
+type Page = 'competition' | 'trader';
 
 function App() {
   const { language, setLanguage } = useLanguage();
@@ -25,13 +25,13 @@ function App() {
   const getInitialPage = (): Page => {
     const hash = window.location.hash.slice(1); // 去掉 #
     if (hash === 'trader' || hash === 'details') return 'trader';
-    if (hash === 'management') return 'management';
     return 'competition';
   };
 
   const [currentPage, setCurrentPage] = useState<Page>(getInitialPage());
   const [selectedTraderId, setSelectedTraderId] = useState<string | undefined>();
   const [lastUpdate, setLastUpdate] = useState<string>('--:--:--');
+  const [showAddTraderModal, setShowAddTraderModal] = useState(false);
 
   // 监听URL hash变化，同步页面状态
   useEffect(() => {
@@ -39,8 +39,6 @@ function App() {
       const hash = window.location.hash.slice(1);
       if (hash === 'trader' || hash === 'details') {
         setCurrentPage('trader');
-      } else if (hash === 'management') {
-        setCurrentPage('management');
       } else if (hash === 'competition' || hash === '') {
         setCurrentPage('competition');
       }
@@ -162,30 +160,6 @@ function App() {
 
             {/* Right: Controls - Wrap on mobile */}
             <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
-              {/* GitHub Link - Hidden on mobile, icon only on tablet */}
-              <a
-                href="https://github.com/tinkle-community/nofx"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:flex items-center gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded text-sm font-semibold transition-all hover:scale-105"
-                style={{ background: '#1E2329', color: '#848E9C', border: '1px solid #2B3139' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#2B3139';
-                  e.currentTarget.style.color = '#EAECEF';
-                  e.currentTarget.style.borderColor = '#F0B90B';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#1E2329';
-                  e.currentTarget.style.color = '#848E9C';
-                  e.currentTarget.style.borderColor = '#2B3139';
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-                </svg>
-                <span className="hidden md:inline">GitHub</span>
-              </a>
-
               {/* Language Toggle */}
               <div className="flex gap-0.5 sm:gap-1 rounded p-0.5 sm:p-1" style={{ background: '#1E2329' }}>
                 <button
@@ -232,32 +206,32 @@ function App() {
                 >
                   {t('details', language)}
                 </button>
-                <button
-                  onClick={() => navigateToPage('management')}
-                  className="px-2 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold transition-all"
-                  style={currentPage === 'management'
-                    ? { background: '#F0B90B', color: '#000' }
-                    : { background: 'transparent', color: '#848E9C' }
-                  }
-                >
-                  {t('management', language)}
-                </button>
               </div>
 
-              {/* Trader Selector (only show on trader page) */}
+              {/* Trader Selector and Add Trader Button (only show on trader page) */}
               {currentPage === 'trader' && traders && traders.length > 0 && (
-                <select
-                  value={selectedTraderId}
-                  onChange={(e) => setSelectedTraderId(e.target.value)}
-                  className="rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium cursor-pointer transition-colors flex-1 sm:flex-initial"
-                  style={{ background: '#1E2329', border: '1px solid #2B3139', color: '#EAECEF' }}
-                >
-                  {traders.map((trader) => (
-                    <option key={trader.trader_id} value={trader.trader_id}>
-                      {trader.trader_name} ({trader.ai_model.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
+                <>
+                  <select
+                    value={selectedTraderId}
+                    onChange={(e) => setSelectedTraderId(e.target.value)}
+                    className="rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium cursor-pointer transition-colors flex-1 sm:flex-initial"
+                    style={{ background: '#1E2329', border: '1px solid #2B3139', color: '#EAECEF' }}
+                  >
+                    {traders.map((trader) => (
+                      <option key={trader.trader_id} value={trader.trader_id}>
+                        {trader.trader_name} ({trader.ai_model.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setShowAddTraderModal(true)}
+                    className="px-3 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5"
+                    style={{ background: 'linear-gradient(135deg, #F0B90B 0%, #FCD535 100%)', color: '#000' }}
+                  >
+                    <span className="text-base">+</span>
+                    <span className="hidden sm:inline">{t('addTrader', language)}</span>
+                  </button>
+                </>
               )}
 
               {/* Status Indicator (only show on trader page) */}
@@ -287,8 +261,6 @@ function App() {
       <main className="max-w-[1920px] mx-auto px-6 py-6">
         {currentPage === 'competition' ? (
           <CompetitionPage />
-        ) : currentPage === 'management' ? (
-          <TraderManagement language={language} />
         ) : (
           <TraderDetailsPage
             selectedTrader={selectedTrader}
@@ -303,37 +275,42 @@ function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="mt-16" style={{ borderTop: '1px solid #2B3139', background: '#181A20' }}>
-        <div className="max-w-[1920px] mx-auto px-6 py-6 text-center text-sm" style={{ color: '#5E6673' }}>
-          <p>{t('footerTitle', language)}</p>
-          <p className="mt-1">{t('footerWarning', language)}</p>
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <a
-              href="https://github.com/tinkle-community/nofx"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold transition-all hover:scale-105"
-              style={{ background: '#1E2329', color: '#848E9C', border: '1px solid #2B3139' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#2B3139';
-                e.currentTarget.style.color = '#EAECEF';
-                e.currentTarget.style.borderColor = '#F0B90B';
+      {/* Add Trader Modal */}
+      {showAddTraderModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0, 0, 0, 0.8)' }}
+          onClick={() => setShowAddTraderModal(false)}
+        >
+          <div
+            className="binance-card p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold" style={{ color: '#EAECEF' }}>
+                ⚙️ {t('traderManagement', language)}
+              </h3>
+              <button
+                onClick={() => setShowAddTraderModal(false)}
+                className="text-2xl font-bold transition-colors"
+                style={{ color: '#848E9C' }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Trader Management Form */}
+            <TraderManagement
+              language={language}
+              onSuccess={() => {
+                setShowAddTraderModal(false);
+                // Optionally refresh traders list here if needed
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#1E2329';
-                e.currentTarget.style.color = '#848E9C';
-                e.currentTarget.style.borderColor = '#2B3139';
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-              </svg>
-              <span>Star on GitHub</span>
-            </a>
+            />
           </div>
         </div>
-      </footer>
+      )}
     </div>
   );
 }
@@ -357,6 +334,81 @@ function TraderDetailsPage({
   lastUpdate: string;
   language: Language;
 }) {
+  // Prompt Editor Modal 状态
+  const [showPromptEditor, setShowPromptEditor] = useState(false);
+  const [prompt, setPrompt] = useState('');
+  const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
+  const [isSavingPrompt, setIsSavingPrompt] = useState(false);
+  const [promptMessage, setPromptMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // 加载 prompt（当打开 Modal 时）
+  useEffect(() => {
+    if (showPromptEditor && !prompt) {
+      loadPrompt();
+    }
+  }, [showPromptEditor]);
+
+  const loadPrompt = async () => {
+    setIsLoadingPrompt(true);
+    try {
+      const result = await api.getSystemPrompt();
+      setPrompt(result.system_prompt || '');
+    } catch (error: any) {
+      setPromptMessage({
+        type: 'error',
+        text: error.message || t('loadPromptError', language),
+      });
+    } finally {
+      setIsLoadingPrompt(false);
+    }
+  };
+
+  const handleSavePrompt = async () => {
+    if (!prompt.trim()) {
+      setPromptMessage({
+        type: 'error',
+        text: t('promptEmpty', language),
+      });
+      return;
+    }
+
+    setIsSavingPrompt(true);
+    setPromptMessage(null);
+
+    try {
+      const result = await api.updateSystemPrompt(prompt);
+      setPromptMessage({
+        type: 'success',
+        text: result.message || t('promptUpdated', language),
+      });
+      setTimeout(() => {
+        setShowPromptEditor(false);
+        setPromptMessage(null);
+      }, 2000);
+    } catch (error: any) {
+      setPromptMessage({
+        type: 'error',
+        text: error.message || t('promptUpdateError', language),
+      });
+    } finally {
+      setIsSavingPrompt(false);
+    }
+  };
+
+  const handleCancelPrompt = () => {
+    setShowPromptEditor(false);
+    setPromptMessage(null);
+    setPrompt('');
+  };
+
+  const handleRestoreDefault = () => {
+    setPrompt('');
+    setPromptMessage({
+      type: 'success',
+      text: t('restoreDefault', language),
+    });
+  };
+
   if (!selectedTrader) {
     return (
       <div className="space-y-6">
@@ -389,22 +441,33 @@ function TraderDetailsPage({
     <div>
       {/* Trader Header */}
       <div className="mb-6 rounded p-6 animate-scale-in" style={{ background: 'linear-gradient(135deg, rgba(240, 185, 11, 0.15) 0%, rgba(252, 213, 53, 0.05) 100%)', border: '1px solid rgba(240, 185, 11, 0.2)', boxShadow: '0 0 30px rgba(240, 185, 11, 0.15)' }}>
-        <h2 className="text-2xl font-bold mb-3 flex items-center gap-2" style={{ color: '#EAECEF' }}>
-          <span className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: 'linear-gradient(135deg, #F0B90B 0%, #FCD535 100%)' }}>
-            🤖
-          </span>
-          {selectedTrader.trader_name}
-        </h2>
-        <div className="flex items-center gap-4 text-sm" style={{ color: '#848E9C' }}>
-          <span>AI Model: <span className="font-semibold" style={{ color: selectedTrader.ai_model === 'qwen' ? '#c084fc' : '#60a5fa' }}>{selectedTrader.ai_model.toUpperCase()}</span></span>
-          {status && (
-            <>
-              <span>•</span>
-              <span>Cycles: {status.call_count}</span>
-              <span>•</span>
-              <span>Runtime: {status.runtime_minutes} min</span>
-            </>
-          )}
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold mb-3 flex items-center gap-2" style={{ color: '#EAECEF' }}>
+              <span className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: 'linear-gradient(135deg, #F0B90B 0%, #FCD535 100%)' }}>
+                🤖
+              </span>
+              {selectedTrader.trader_name}
+            </h2>
+            <div className="flex items-center gap-4 text-sm" style={{ color: '#848E9C' }}>
+              <span>AI Model: <span className="font-semibold" style={{ color: selectedTrader.ai_model === 'qwen' ? '#c084fc' : '#60a5fa' }}>{selectedTrader.ai_model.toUpperCase()}</span></span>
+              {status && (
+                <>
+                  <span>•</span>
+                  <span>Cycles: {status.call_count}</span>
+                  <span>•</span>
+                  <span>Runtime: {status.runtime_minutes} min</span>
+                </>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={() => setShowPromptEditor(true)}
+            className="px-4 py-2 rounded font-semibold text-sm transition-all flex items-center gap-2"
+            style={{ background: 'linear-gradient(135deg, #F0B90B 0%, #FCD535 100%)', color: '#000' }}
+          >
+            📝 {t('editPrompt', language)}
+          </button>
         </div>
       </div>
 
@@ -573,6 +636,123 @@ function TraderDetailsPage({
       <div className="mb-6 animate-slide-in" style={{ animationDelay: '0.3s' }}>
         <AILearning traderId={selectedTrader.trader_id} />
       </div>
+
+      {/* Prompt Editor Modal */}
+      {showPromptEditor && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0, 0, 0, 0.8)' }}
+          onClick={() => setShowPromptEditor(false)}
+        >
+          <div
+            className="binance-card p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold" style={{ color: '#EAECEF' }}>
+                📝 {t('promptEditor', language)}
+              </h3>
+              <button
+                onClick={() => setShowPromptEditor(false)}
+                className="text-2xl font-bold transition-colors"
+                style={{ color: '#848E9C' }}
+              >
+                ×
+              </button>
+            </div>
+
+            <p className="text-sm mb-4" style={{ color: '#848E9C' }}>
+              {t('systemPromptDescription', language)}
+            </p>
+
+            {/* Message */}
+            {promptMessage && (
+              <div
+                className="rounded p-4 mb-4 animate-fade-in"
+                style={
+                  promptMessage.type === 'success'
+                    ? { background: 'rgba(14, 203, 129, 0.1)', border: '1px solid rgba(14, 203, 129, 0.2)', color: '#0ECB81' }
+                    : { background: 'rgba(246, 70, 93, 0.1)', border: '1px solid rgba(246, 70, 93, 0.2)', color: '#F6465D' }
+                }
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">{promptMessage.type === 'success' ? '✅' : '❌'}</span>
+                  <div className="flex-1">
+                    <p className="font-semibold mb-1">{promptMessage.type === 'success' ? t('success', language) : t('error', language)}</p>
+                    <p className="text-sm">{promptMessage.text}</p>
+                    {promptMessage.type === 'success' && (
+                      <p className="text-xs mt-2" style={{ color: '#848E9C' }}>
+                        {t('effectsNextCycle', language)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Prompt Editor */}
+            {isLoadingPrompt ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: '#F0B90B' }}></div>
+                  <p style={{ color: '#848E9C' }}>{t('loadingPrompt', language)}</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={20}
+                  className="w-full px-4 py-3 rounded text-sm font-mono mb-4"
+                  style={{
+                    background: '#1E2329',
+                    border: '1px solid #2B3139',
+                    color: '#EAECEF',
+                    resize: 'vertical',
+                  }}
+                  placeholder={t('systemPrompt', language)}
+                />
+
+                {/* Actions */}
+                <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: '#2B3139' }}>
+                  <button
+                    onClick={handleRestoreDefault}
+                    disabled={isSavingPrompt}
+                    className="px-4 py-2 rounded font-semibold text-sm transition-all disabled:opacity-50"
+                    style={{ background: '#2B3139', color: '#EAECEF' }}
+                  >
+                    {t('restoreDefault', language)}
+                  </button>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleCancelPrompt}
+                      disabled={isSavingPrompt}
+                      className="px-6 py-2 rounded font-semibold text-sm transition-all disabled:opacity-50"
+                      style={{ background: '#2B3139', color: '#EAECEF' }}
+                    >
+                      {t('cancel', language)}
+                    </button>
+                    <button
+                      onClick={handleSavePrompt}
+                      disabled={isSavingPrompt}
+                      className="px-6 py-2 rounded font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        background: isSavingPrompt ? '#848E9C' : 'linear-gradient(135deg, #F0B90B 0%, #FCD535 100%)',
+                        color: '#000',
+                      }}
+                    >
+                      {isSavingPrompt ? t('saving', language) : t('save', language)}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

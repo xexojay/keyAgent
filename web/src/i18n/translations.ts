@@ -141,6 +141,23 @@ export const translations = {
     error: 'Error',
     addTraderError: 'Failed to add trader',
     redeployRequired: '⚠️ Note: You need to redeploy the service for the new trader to take effect.',
+
+    // Prompt Editor
+    promptEditor: 'Prompt Editor',
+    systemPromptDescription: 'Customize the AI trading system prompt',
+    systemPrompt: 'System Prompt',
+    currentPrompt: 'Current Prompt',
+    editPrompt: 'Edit Prompt',
+    save: 'Save',
+    cancel: 'Cancel',
+    saving: 'Saving...',
+    restoreDefault: 'Restore Default',
+    promptEmpty: 'Prompt cannot be empty',
+    promptUpdated: 'System prompt updated successfully',
+    promptUpdateError: 'Failed to update system prompt',
+    loadingPrompt: 'Loading...',
+    loadPromptError: 'Failed to load system prompt',
+    effectsNextCycle: 'Changes will take effect in the next decision cycle',
   },
   zh: {
     // Header
@@ -282,6 +299,23 @@ export const translations = {
     error: '错误',
     addTraderError: '添加 trader 失败',
     redeployRequired: '⚠️ 注意：您需要重新部署服务才能使新 trader 生效。',
+
+    // Prompt Editor
+    promptEditor: 'Prompt 编辑器',
+    systemPromptDescription: '自定义 AI 交易系统提示词',
+    systemPrompt: '系统提示词',
+    currentPrompt: '当前提示词',
+    editPrompt: '编辑提示词',
+    save: '保存',
+    cancel: '取消',
+    saving: '保存中...',
+    restoreDefault: '恢复默认',
+    promptEmpty: '提示词不能为空',
+    promptUpdated: '系统提示词更新成功',
+    promptUpdateError: '更新系统提示词失败',
+    loadingPrompt: '加载中...',
+    loadPromptError: '加载系统提示词失败',
+    effectsNextCycle: '更改将在下个决策周期生效',
   }
 };
 

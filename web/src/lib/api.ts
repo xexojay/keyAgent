@@ -126,4 +126,27 @@ export const api = {
     }
     return res.json();
   },
+
+  // 获取系统提示词
+  async getSystemPrompt(): Promise<{ success: boolean; system_prompt: string }> {
+    const res = await fetch(`${API_BASE}/system-prompt`);
+    if (!res.ok) throw new Error('获取系统提示词失败');
+    return res.json();
+  },
+
+  // 更新系统提示词
+  async updateSystemPrompt(systemPrompt: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/system-prompt`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ system_prompt: systemPrompt }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || '更新系统提示词失败');
+    }
+    return res.json();
+  },
 };

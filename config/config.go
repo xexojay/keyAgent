@@ -61,7 +61,8 @@ type Config struct {
 	MaxDailyLoss       float64        `json:"max_daily_loss"`
 	MaxDrawdown        float64        `json:"max_drawdown"`
 	StopTradingMinutes int            `json:"stop_trading_minutes"`
-	Leverage           LeverageConfig `json:"leverage"` // 杠杆配置
+	Leverage           LeverageConfig `json:"leverage"`      // 杠杆配置
+	SystemPrompt       string         `json:"system_prompt"` // 自定义系统提示词（可选，为空则使用默认）
 }
 
 // LoadConfig 从文件加载配置

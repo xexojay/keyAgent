@@ -4,9 +4,10 @@ import { t, type Language } from '../i18n/translations';
 
 interface TraderManagementProps {
   language: Language;
+  onSuccess?: () => void;
 }
 
-export function TraderManagement({ language }: TraderManagementProps) {
+export function TraderManagement({ language, onSuccess }: TraderManagementProps) {
   const [formData, setFormData] = useState({
     id: '',
     name: '',
@@ -61,6 +62,13 @@ export function TraderManagement({ language }: TraderManagementProps) {
         initial_balance: 50,
         scan_interval_minutes: 3,
       });
+
+      // Call onSuccess callback if provided (for Modal mode)
+      if (onSuccess) {
+        setTimeout(() => {
+          onSuccess();
+        }, 2000);
+      }
     } catch (error: any) {
       setMessage({
         type: 'error',
@@ -73,19 +81,6 @@ export function TraderManagement({ language }: TraderManagementProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="binance-card p-6 animate-scale-in">
-        <h2 className="text-2xl font-bold mb-3 flex items-center gap-2" style={{ color: '#EAECEF' }}>
-          <span className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: 'linear-gradient(135deg, #F0B90B 0%, #FCD535 100%)' }}>
-            ⚙️
-          </span>
-          {t('traderManagement', language)}
-        </h2>
-        <p className="text-sm" style={{ color: '#848E9C' }}>
-          {t('addNewTrader', language)}
-        </p>
-      </div>
-
       {/* Message */}
       {message && (
         <div

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"nofx/config"
+	"nofx/decision"
 	"nofx/manager"
 	"os"
 
@@ -73,6 +74,10 @@ func (s *Server) setupRoutes() {
 
 		// 添加新trader
 		api.POST("/traders", s.handleAddTrader)
+
+		// System Prompt 管理
+		api.GET("/system-prompt", s.handleGetSystemPrompt)
+		api.PUT("/system-prompt", s.handleUpdateSystemPrompt)
 
 		// 指定trader的数据（使用query参数 ?trader_id=xxx）
 		api.GET("/status", s.handleStatus)
@@ -484,6 +489,95 @@ func (s *Server) handleAddTrader(c *gin.Context) {
 		"success": true,
 		"message": fmt.Sprintf("Trader '%s' 添加成功！请重新部署服务以使新配置生效。", req.Name),
 		"trader_id": req.ID,
+	})
+}
+
+// handleGetSystemPrompt 获取当前系统提示词
+func (s *Server) handleGetSystemPrompt(c *gin.Context) {
+	// 读取当前配置文件
+	cfg, err := config.LoadConfig("config.json")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("读取配置文件失败: %v", err),
+		})
+		return
+	}
+
+	systemPrompt := cfg.SystemPrompt
+	isDefault := false
+
+	// 如果配置中的 system_prompt 为空，返回默认 prompt
+	if systemPrompt == "" {
+		isDefault = true
+		// 使用默认值：账户净值 1000，杠杆倍数从配置读取
+		accountEquity := 1000.0
+		if len(cfg.Traders) > 0 {
+			accountEquity = cfg.Traders[0].InitialBalance
+		}
+		systemPrompt = decision.GetDefaultSystemPrompt(
+			accountEquity,
+			cfg.Leverage.BTCETHLeverage,
+			cfg.Leverage.AltcoinLeverage,
+		)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":       true,
+		"system_prompt": systemPrompt,
+		"is_default":    isDefault,
+	})
+}
+
+// handleUpdateSystemPrompt 更新系统提示词
+func (s *Server) handleUpdateSystemPrompt(c *gin.Context) {
+	var req struct {
+		SystemPrompt string `json:"system_prompt"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("请求参数错误: %v", err),
+		})
+		return
+	}
+
+	// 读取当前配置文件
+	cfg, err := config.LoadConfig("config.json")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("读取配置文件失败: %v", err),
+		})
+		return
+	}
+
+	// 更新系统提示词
+	cfg.SystemPrompt = req.SystemPrompt
+
+	// 写回配置文件
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("序列化配置失败: %v", err),
+		})
+		return
+	}
+
+	if err := os.WriteFile("config.json", data, 0644); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("写入配置文件失败: %v", err),
+		})
+		return
+	}
+
+	log.Printf("✓ 系统提示词已更新 (长度: %d 字符)", len(req.SystemPrompt))
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "系统提示词已更新！下次决策周期将生效。",
 	})
 }
 

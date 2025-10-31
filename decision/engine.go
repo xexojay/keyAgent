@@ -66,6 +66,7 @@ type Context struct {
 	Performance     interface{}             `json:"-"` // 历史表现分析（logger.PerformanceAnalysis）
 	BTCETHLeverage  int                     `json:"-"` // BTC/ETH杠杆倍数（从配置读取）
 	AltcoinLeverage int                     `json:"-"` // 山寨币杠杆倍数（从配置读取）
+	CustomSystemPrompt string               `json:"-"` // 自定义系统提示词（可选）
 }
 
 // Decision AI的交易决策
@@ -97,7 +98,7 @@ func GetFullDecision(ctx *Context, mcpClient *mcp.Client) (*FullDecision, error)
 	}
 
 	// 2. 构建 System Prompt（固定规则）和 User Prompt（动态数据）
-	systemPrompt := buildSystemPrompt(ctx.Account.TotalEquity, ctx.BTCETHLeverage, ctx.AltcoinLeverage)
+	systemPrompt := buildSystemPrompt(ctx.Account.TotalEquity, ctx.BTCETHLeverage, ctx.AltcoinLeverage, ctx.CustomSystemPrompt)
 	userPrompt := buildUserPrompt(ctx)
 
 	// 3. 调用AI API（使用 system + user prompt）
@@ -199,8 +200,24 @@ func calculateMaxCandidates(ctx *Context) int {
 	return len(ctx.CandidateCoins)
 }
 
+// GetDefaultSystemPrompt 获取默认系统提示词（导出供API使用）
+func GetDefaultSystemPrompt(accountEquity float64, btcEthLeverage, altcoinLeverage int) string {
+	return buildDefaultSystemPrompt(accountEquity, btcEthLeverage, altcoinLeverage)
+}
+
 // buildSystemPrompt 构建 System Prompt（固定规则，可缓存）
-func buildSystemPrompt(accountEquity float64, btcEthLeverage, altcoinLeverage int) string {
+func buildSystemPrompt(accountEquity float64, btcEthLeverage, altcoinLeverage int, customPrompt string) string {
+	// 如果提供了自定义 prompt，直接使用
+	if customPrompt != "" {
+		return customPrompt
+	}
+
+	// 否则使用默认 prompt
+	return buildDefaultSystemPrompt(accountEquity, btcEthLeverage, altcoinLeverage)
+}
+
+// buildDefaultSystemPrompt 构建默认系统提示词
+func buildDefaultSystemPrompt(accountEquity float64, btcEthLeverage, altcoinLeverage int) string {
 	var sb strings.Builder
 
 	// === 核心使命 ===
